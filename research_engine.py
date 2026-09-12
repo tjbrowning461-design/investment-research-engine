@@ -1,82 +1,8 @@
-import json
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
 
-
-# =========================================================
-# PROJECT PATHS
-# =========================================================
-
-DESKTOP = Path.home() / "Desktop"
-
-FINANCIAL_AGENT_DIR = (
-    DESKTOP
-    / "ai-financial-briefing-agent"
-)
-
-COMPARISON_ENGINE_DIR = (
-    DESKTOP
-    / "company-comparison-engine"
-)
-
-DCF_ENGINE_DIR = (
-    DESKTOP
-    / "dcf-valuation-engine"
-)
-
-
-# =========================================================
-# LOAD EXISTING ENVIRONMENT FILES
-# =========================================================
-#
-# This allows the combined engine to reuse:
-# - your OpenAI API key
-# - your SEC user agent
-#
-# without copying secrets into this new project's source code.
-# =========================================================
-
-for env_file in [
-    FINANCIAL_AGENT_DIR / ".env",
-    COMPARISON_ENGINE_DIR / ".env",
-    DCF_ENGINE_DIR / ".env",
-]:
-
-    if env_file.exists():
-
-        load_dotenv(
-            env_file,
-            override=False,
-        )
-
-
-# =========================================================
-# IMPORT PATHS
-# =========================================================
-
-for project_path in [
-    FINANCIAL_AGENT_DIR,
-    COMPARISON_ENGINE_DIR,
-    DCF_ENGINE_DIR,
-]:
-
-    path_string = str(
-        project_path
-    )
-
-    if path_string not in sys.path:
-
-        sys.path.insert(
-            0,
-            path_string,
-        )
-
-
-# =========================================================
-# IMPORT EXISTING ENGINES
-# =========================================================
+load_dotenv()
 
 import finance_agent
 
@@ -100,17 +26,12 @@ def format_percent(
         return None
 
     try:
-
         return round(
-            float(
-                value
-            )
-            * 100,
+            float(value) * 100,
             2,
         )
 
     except Exception:
-
         return None
 
 
@@ -121,16 +42,12 @@ def format_number(
         return None
 
     try:
-
         return round(
-            float(
-                value
-            ),
+            float(value),
             2,
         )
 
     except Exception:
-
         return None
 
 
@@ -150,7 +67,6 @@ def make_serializable(
         value,
         "model_dump",
     ):
-
         return make_serializable(
             value.model_dump()
         )
@@ -159,29 +75,22 @@ def make_serializable(
         value,
         "dict",
     ):
-
         try:
-
             return make_serializable(
                 value.dict()
             )
 
         except Exception:
-
             pass
 
     if isinstance(
         value,
         dict,
     ):
-
         return {
-            str(
-                key
-            ):
-            make_serializable(
-                item
-            )
+            str(key):
+                make_serializable(item)
+
             for key, item
             in value.items()
         }
@@ -194,11 +103,8 @@ def make_serializable(
             set,
         ),
     ):
-
         return [
-            make_serializable(
-                item
-            )
+            make_serializable(item)
             for item
             in value
         ]
@@ -207,26 +113,20 @@ def make_serializable(
         value,
         "item",
     ):
-
         try:
-
             return value.item()
 
         except Exception:
-
             pass
 
     if hasattr(
         value,
         "isoformat",
     ):
-
         try:
-
             return value.isoformat()
 
         except Exception:
-
             pass
 
     if isinstance(
@@ -238,12 +138,9 @@ def make_serializable(
             bool,
         ),
     ):
-
         return value
 
-    return str(
-        value
-    )
+    return str(value)
 
 
 # =========================================================
@@ -253,14 +150,9 @@ def make_serializable(
 def build_financial_briefing_snapshot(
     ticker,
 ):
-
     print(
         "\nRunning Financial Briefing Agent..."
     )
-
-    # -----------------------------------------------------
-    # RAW / CALCULATED FINANCIAL DATA
-    # -----------------------------------------------------
 
     financial_data = (
         finance_agent
@@ -268,11 +160,6 @@ def build_financial_briefing_snapshot(
             ticker
         )
     )
-
-
-    # -----------------------------------------------------
-    # AI EXECUTIVE BRIEF
-    # -----------------------------------------------------
 
     ai_brief = (
         finance_agent
@@ -304,7 +191,6 @@ def build_financial_briefing_snapshot(
 def build_comparison_snapshot(
     ticker,
 ):
-
     print(
         "\nRunning Company Comparison Engine..."
     )
@@ -349,11 +235,6 @@ def build_comparison_snapshot(
                 "data_quality"
             ),
 
-
-        # -------------------------------------------------
-        # GROWTH
-        # -------------------------------------------------
-
         "revenue_growth_yoy_percent":
             format_percent(
                 metrics.get(
@@ -381,11 +262,6 @@ def build_comparison_snapshot(
                     "eps_growth_yoy"
                 )
             ),
-
-
-        # -------------------------------------------------
-        # PROFITABILITY
-        # -------------------------------------------------
 
         "gross_margin_percent":
             format_percent(
@@ -415,11 +291,6 @@ def build_comparison_snapshot(
                 )
             ),
 
-
-        # -------------------------------------------------
-        # BALANCE SHEET
-        # -------------------------------------------------
-
         "debt_to_equity":
             format_number(
                 metrics.get(
@@ -433,11 +304,6 @@ def build_comparison_snapshot(
                     "current_ratio"
                 )
             ),
-
-
-        # -------------------------------------------------
-        # VALUATION
-        # -------------------------------------------------
 
         "market_cap":
             metrics.get(
@@ -486,11 +352,6 @@ def build_comparison_snapshot(
                 )
             ),
 
-
-        # -------------------------------------------------
-        # ACCOUNTING FLAGS
-        # -------------------------------------------------
-
         "unusual_non_operating":
             metrics.get(
                 "unusual_non_operating"
@@ -523,7 +384,6 @@ def build_comparison_snapshot(
 def build_dcf_snapshot(
     ticker,
 ):
-
     print(
         "\nRunning DCF Valuation Engine..."
     )
@@ -556,21 +416,11 @@ def build_dcf_snapshot(
         "Base"
     ]
 
-
     return {
-        # -------------------------------------------------
-        # CURRENT MARKET VALUE
-        # -------------------------------------------------
-
         "current_price":
             base.get(
                 "current_price"
             ),
-
-
-        # -------------------------------------------------
-        # VALUATION RANGE
-        # -------------------------------------------------
 
         "bear_value":
             scenarios[
@@ -603,16 +453,10 @@ def build_dcf_snapshot(
                 ]
             ),
 
-
-        # -------------------------------------------------
-        # BASE DCF ASSUMPTIONS
-        # -------------------------------------------------
-
         "base_growth_path_percent":
             [
-                format_percent(
-                    value
-                )
+                format_percent(value)
+
                 for value
                 in base_scenario[
                     "assumptions"
@@ -623,9 +467,8 @@ def build_dcf_snapshot(
 
         "base_margin_path_percent":
             [
-                format_percent(
-                    value
-                )
+                format_percent(value)
+
                 for value
                 in base_scenario[
                     "assumptions"
@@ -657,11 +500,6 @@ def build_dcf_snapshot(
                 ]
             ),
 
-
-        # -------------------------------------------------
-        # HISTORICAL INPUTS
-        # -------------------------------------------------
-
         "historical_revenue_cagr_percent":
             format_percent(
                 base.get(
@@ -690,11 +528,6 @@ def build_dcf_snapshot(
                 )
             ),
 
-
-        # -------------------------------------------------
-        # REVERSE DCF
-        # -------------------------------------------------
-
         "reverse_dcf_implied_start_growth_percent":
             (
                 format_percent(
@@ -702,7 +535,9 @@ def build_dcf_snapshot(
                         "implied_starting_growth"
                     )
                 )
+
                 if reverse
+
                 else None
             ),
 
@@ -710,11 +545,6 @@ def build_dcf_snapshot(
             make_serializable(
                 reverse
             ),
-
-
-        # -------------------------------------------------
-        # MODEL QUALITY
-        # -------------------------------------------------
 
         "data_quality":
             quality.get(
@@ -761,7 +591,6 @@ def build_dcf_snapshot(
 def build_research_package(
     ticker,
 ):
-
     ticker = (
         ticker
         .strip()
@@ -801,19 +630,11 @@ def build_research_package(
             [],
     }
 
-
-    # =====================================================
-    # FINANCIAL BRIEFING AGENT
-    # =====================================================
-
     try:
-
         package[
             "financial_briefing"
-        ] = (
-            build_financial_briefing_snapshot(
-                ticker
-            )
+        ] = build_financial_briefing_snapshot(
+            ticker
         )
 
         package[
@@ -823,7 +644,6 @@ def build_research_package(
         ] = "success"
 
     except Exception as error:
-
         package[
             "integration_status"
         ][
@@ -838,19 +658,11 @@ def build_research_package(
                     "financial_briefing_agent",
 
                 "error":
-                    str(
-                        error
-                    ),
+                    str(error),
             }
         )
 
-
-    # =====================================================
-    # COMPANY COMPARISON ENGINE
-    # =====================================================
-
     try:
-
         package[
             "comparison"
         ] = build_comparison_snapshot(
@@ -864,7 +676,6 @@ def build_research_package(
         ] = "success"
 
     except Exception as error:
-
         package[
             "integration_status"
         ][
@@ -879,19 +690,11 @@ def build_research_package(
                     "comparison_engine",
 
                 "error":
-                    str(
-                        error
-                    ),
+                    str(error),
             }
         )
 
-
-    # =====================================================
-    # DCF ENGINE
-    # =====================================================
-
     try:
-
         package[
             "dcf"
         ] = build_dcf_snapshot(
@@ -905,7 +708,6 @@ def build_research_package(
         ] = "success"
 
     except Exception as error:
-
         package[
             "integration_status"
         ][
@@ -920,9 +722,7 @@ def build_research_package(
                     "dcf_engine",
 
                 "error":
-                    str(
-                        error
-                    ),
+                    str(error),
             }
         )
 
@@ -936,7 +736,6 @@ def build_research_package(
 def print_research_package(
     package,
 ):
-
     print(
         "\n\n"
         + "=" * 80
@@ -949,11 +748,6 @@ def print_research_package(
     print(
         "=" * 80
     )
-
-
-    # =====================================================
-    # INTEGRATION STATUS
-    # =====================================================
 
     print(
         "\nINTEGRATION STATUS"
@@ -968,15 +762,9 @@ def print_research_package(
             "integration_status"
         ].items()
     ):
-
         print(
             f"{engine}: {status}"
         )
-
-
-    # =====================================================
-    # FINANCIAL BRIEFING AGENT
-    # =====================================================
 
     print(
         "\n"
@@ -996,7 +784,6 @@ def print_research_package(
     )
 
     if briefing:
-
         print(
             f"status: {briefing.get('status')}"
         )
@@ -1006,7 +793,6 @@ def print_research_package(
         )
 
         if executive_brief:
-
             print(
                 "\nExecutive Summary:"
             )
@@ -1015,41 +801,32 @@ def print_research_package(
                 executive_brief.get(
                     "executive_summary"
                 )
+
                 if isinstance(
                     executive_brief,
                     dict,
                 )
+
                 else None
             )
 
             if summary:
-
-                print(
-                    summary
-                )
+                print(summary)
 
             else:
-
                 print(
                     "Structured AI brief loaded successfully."
                 )
 
         else:
-
             print(
                 "AI brief unavailable."
             )
 
     else:
-
         print(
             "Unavailable"
         )
-
-
-    # =====================================================
-    # COMPARISON ENGINE
-    # =====================================================
 
     print(
         "\n"
@@ -1069,7 +846,6 @@ def print_research_package(
     )
 
     if comparison:
-
         key_metrics = [
             "company_name",
             "period_end",
@@ -1091,22 +867,15 @@ def print_research_package(
         ]
 
         for key in key_metrics:
-
             print(
                 f"{key}: "
                 f"{comparison.get(key)}"
             )
 
     else:
-
         print(
             "Unavailable"
         )
-
-
-    # =====================================================
-    # DCF
-    # =====================================================
 
     print(
         "\n"
@@ -1126,7 +895,6 @@ def print_research_package(
     )
 
     if dcf:
-
         print(
             f"Current Price: "
             f"{dcf.get('current_price')}"
@@ -1173,20 +941,13 @@ def print_research_package(
         )
 
     else:
-
         print(
             "Unavailable"
         )
 
-
-    # =====================================================
-    # ERRORS
-    # =====================================================
-
     if package[
         "errors"
     ]:
-
         print(
             "\n"
             + "=" * 80
@@ -1203,7 +964,6 @@ def print_research_package(
         for error in package[
             "errors"
         ]:
-
             print(
                 f"{error['source']}: "
                 f"{error['error']}"
@@ -1215,7 +975,6 @@ def print_research_package(
 # =========================================================
 
 def main():
-
     ticker = input(
         "Enter stock ticker: "
     )
